@@ -271,3 +271,23 @@ func TestVec4f_Cross(t *testing.T) {
 		})
 	}
 }
+
+func TestVec4f_MulVec(t *testing.T) {
+	tests := []struct {
+		a, b Vec4f
+		res  Vec4f
+		want bool
+	}{
+		{NewRGB(1, 0.2, 0.4), NewPoint(0.9, 1, 0.1), NewPoint(0.9, 0.2, 0.04), true},
+	}
+	for i, tt := range tests {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			tmp := tt.a
+			tmp.MulVec(&tt.b)
+
+			if got := tmp.Equals(&tt.res); got != tt.want {
+				t.Errorf("%v * %v = %v, want %v", tt.a, tt.b, tt.res, tt.want)
+			}
+		})
+	}
+}

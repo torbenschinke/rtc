@@ -21,7 +21,7 @@ package math
 // because escape analysis works usually properly for stack values and instead
 // of coping all components over and over again we just need the pointer to pass.
 type Vec4f struct {
-	X, Y, Z, W float32
+	X, Y, Z, W float32 // or also R,G,B,A
 }
 
 // NewPoint creates a point tuple with a W component of 1.
@@ -32,6 +32,16 @@ func NewPoint(x, y, z float32) Vec4f {
 // NewVector creates a point tuple with a W component of 0.
 func NewVector(x, y, z float32) Vec4f {
 	return Vec4f{X: x, Y: y, Z: z, W: 0}
+}
+
+// NewRGB creates a new color values with alpha 1.
+func NewRGB(r, g, b float32) Vec4f {
+	return NewPoint(r, g, b)
+}
+
+// NewRGBA creates a new color values.
+func NewRGBA(r, g, b, a float32) Vec4f {
+	return Vec4f{r, g, b, a}
 }
 
 // IsVector returns true if the W component is 0.
@@ -81,6 +91,15 @@ func (v *Vec4f) Mul(scalar float32) {
 	v.W *= scalar
 }
 
+// MulVec multiplies each component with the given scalar. If v is a color, this is blending (Hadamard product
+// or Schur product).
+func (v *Vec4f) MulVec(o *Vec4f) {
+	v.X *= o.X
+	v.Y *= o.Y
+	v.Z *= o.Z
+	v.W *= o.W
+}
+
 // Div divides each component with the given scalar.
 func (v *Vec4f) Div(scalar float32) {
 	v.X /= scalar
@@ -118,4 +137,39 @@ func (v *Vec4f) Cross(o *Vec4f) {
 		v.Z*o.X-v.X*o.Z,
 		v.X*o.Y-v.Y*o.X,
 	)
+}
+
+// Saturate clamps all components range into 0 and 1.
+func (v *Vec4f) Saturate() {
+	if v.X < 0 {
+		v.X = 0
+	}
+
+	if v.X > 1 {
+		v.X = 1
+	}
+
+	if v.Y < 0 {
+		v.Y = 0
+	}
+
+	if v.Y > 1 {
+		v.Y = 1
+	}
+
+	if v.Z < 0 {
+		v.Z = 0
+	}
+
+	if v.Z > 1 {
+		v.Z = 1
+	}
+
+	if v.W < 0 {
+		v.W = 0
+	}
+
+	if v.W > 1 {
+		v.W = 1
+	}
 }
