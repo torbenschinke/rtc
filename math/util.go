@@ -36,3 +36,8 @@ func Equalf(a, b float32) bool {
 func Abs(x float32) float32 {
 	return math.Float32frombits(math.Float32bits(x) &^ (1 << 31))
 }
+
+// Just like math.Sqrt but with float32.
+func Sqrt(x float32) float32 {
+	return float32(math.Sqrt(float64(x)))
+}
