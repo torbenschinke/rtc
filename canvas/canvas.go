@@ -31,6 +31,12 @@ func NewCanvas(w, h int) Canvas {
 	}
 }
 
+func (c *Canvas)Clear(color math.Vec4f){
+	for i := range c.Buffer {
+		c.Buffer[i] = color
+	}
+}
+
 // Write sets the color at the pixel position.
 func (c *Canvas) Write(x, y int, color *math.Vec4f) {
 	c.Buffer[y*c.Width+x] = *color
