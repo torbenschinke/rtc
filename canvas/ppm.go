@@ -15,10 +15,10 @@
 package canvas
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"math"
+	"strconv"
 )
 
 // Export writes the buffer into a ppm (Portable Pixmap) format in plain PPM.
@@ -42,67 +42,49 @@ func (c *Canvas) Export(w io.Writer) error {
 }
 
 type ppm struct {
-	w             io.Writer
-	tmp           *bytes.Buffer
-	err           error
-	maxLineLength int
-	hadPixel      bool
+	w                 io.Writer
+	err               error
+	maxLineLength     int
+	currentLineLength int
+	hadPixelInLine    bool
 }
 
 func newPPM(w io.Writer) *ppm {
 	return &ppm{
 		w:             w,
-		tmp:           &bytes.Buffer{},
 		maxLineLength: 70,
 	}
 }
 
-// Error returns nil or the first occured error.
+// Error returns nil or the first occurred error.
 func (p *ppm) Error() error {
-	return p.err
-}
-
-// Write delegates and captures any error. Subsequent calls after an error are a no-op.
-func (p *ppm) Write(buf []byte) (int, error) {
-	if p.err != nil {
-		return 0, p.err
-	}
-
-	delta := p.maxLineLength - (p.tmp.Len() + len(buf))
-	if delta >= 0 {
-		_, _ = p.tmp.Write(buf)
-		return len(buf), nil
-	}
-
-	fragLen := len(buf) + delta
-	_, _ = p.tmp.Write(buf[:fragLen])
-	_ = p.Flush()
-	_, _ = p.tmp.Write(buf[fragLen:])
-
-	return len(buf), p.err
-}
-
-// Flush emits the internal buffer to the writer.
-func (p *ppm) Flush() error {
-	if p.err != nil {
-		return p.err
-	}
-
-	if p.tmp.Len() > 0 {
-		_, err := p.w.Write(p.tmp.Bytes())
-		if err != nil {
-			p.err = err
-		} else {
-			p.tmp.Reset()
-		}
-	}
-
 	return p.err
 }
 
 // Printf uses fmt.Sprintf to render the string.
 func (p *ppm) Printf(format string, args ...interface{}) {
-	_, _ = p.Write([]byte(fmt.Sprintf(format, args...)))
+	if p.err != nil {
+		return
+	}
+
+	_, p.err = p.w.Write([]byte(fmt.Sprintf(format, args...)))
+}
+
+func (p *ppm) writeNum(f float32) {
+	v := strconv.Itoa(int(math.RoundToEven(float64(f))))
+	if p.currentLineLength+len(v) >= p.maxLineLength {
+		p.currentLineLength = 0
+		p.Printf("\n")
+	} else {
+		if p.hadPixelInLine {
+			p.Printf(" ")
+			p.currentLineLength++
+		}
+	}
+
+	p.currentLineLength += len(v)
+	p.Printf(v)
+	p.hadPixelInLine = true
 }
 
 // WriteHeader emits the header bytes.
@@ -113,26 +95,22 @@ func (p *ppm) WriteHeader(width, height, max int) {
 }
 
 func (p *ppm) WritePixel(r, g, b float32) {
-	if p.hadPixel {
-		p.Printf(" ")
-	}
-	ri := int(math.RoundToEven(float64(r)))
-	gi := int(math.RoundToEven(float64(g)))
-	bi := int(math.RoundToEven(float64(b)))
-	p.Printf("%d %d %d", ri, gi, bi)
-	p.hadPixel = true
+	p.writeNum(r)
+	p.writeNum(g)
+	p.writeNum(b)
 }
 
 func (p *ppm) EndRow() {
 	p.Printf("\n")
-	p.hadPixel = false
+	p.currentLineLength = 0
+	p.hadPixelInLine = false
 }
 
 func (p *ppm) Close() error {
-	if p.hadPixel {
+	if p.hadPixelInLine {
 		p.EndRow()
 	}
 
 	p.Printf("\n")
-	return p.Flush()
+	return p.Error()
 }

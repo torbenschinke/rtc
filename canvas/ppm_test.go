@@ -27,7 +27,7 @@ func TestCanvas_Export(t *testing.T) {
 		factory func() *Canvas
 		ppm     string
 	}{
-	/*	{
+		{
 			factory: func() *Canvas {
 				c := NewCanvas(5, 3)
 				return &c
@@ -66,7 +66,7 @@ func TestCanvas_Export(t *testing.T) {
 
 `,
 		},
-*/
+
 		{
 			factory: func() *Canvas {
 				c := NewCanvas(10, 2)
@@ -78,7 +78,10 @@ func TestCanvas_Export(t *testing.T) {
 10 2
 255
 255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204
-153 255 204 153 255 204 153 255 204 153  
+153 255 204 153 255 204 153 255 204 153 255 204 153
+255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204
+153 255 204 153 255 204 153 255 204 153 255 204 153
+
 `,
 		},
 	}
